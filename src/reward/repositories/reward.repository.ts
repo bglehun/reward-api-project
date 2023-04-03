@@ -1,6 +1,7 @@
 import { CustomRepository } from '../../typeorm/typeorm-custom.decorator';
 import { Reward } from '../entities/reward.entity';
 import { EntityManager, Repository } from 'typeorm';
+import { BadRequestException } from '@nestjs/common';
 
 @CustomRepository(Reward)
 export class RewardRepository extends Repository<Reward> {
@@ -60,9 +61,9 @@ export class RewardRepository extends Repository<Reward> {
     let rewardInfo: Reward = await transactionManager.findOneBy(Reward, { userId })
 
     if (!rewardInfo) {
-      throw new Error('Not exists reward info.');
+      throw new BadRequestException('Not exists reward info.');
     } else if (rewardInfo.remainReward < useReward) {
-      throw new Error('Not enough remainReward');
+      throw new BadRequestException('Not enough remainReward');
     } else {
 
       /**

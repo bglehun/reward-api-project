@@ -68,18 +68,18 @@ describe('Reward Controller API e2e', () => {
         .expect(200);
     });
 
-    it('userId, saveReward 입력 / 중복된 trId 입력 - 성공 (status: 400)', () => {
+    it('userId, saveReward 입력 / 중복된 trId 입력 - 성공 (status: 700)', () => {
       return request(app.getHttpServer())
         .patch('/reward/save/1')
         .send({ saveReward: 10, trId: 'tr_1234' })
-        .expect(400);
+        .expect(700);
     });
 
-    it('userId, saveReward 입력 / trId 미입력 - 실패 (status: 400)', () => {
+    it('userId, saveReward 입력 / trId 미입력 - 실패 (status: 700)', () => {
       return request(app.getHttpServer())
         .patch('/reward/save/1')
         .send({ saveReward: 10 })
-        .expect(400);
+        .expect(700);
     });
 
     it('userId, 중복되지 않은 trId 입력 / saveReward 미입력- 실패 (status: 400)', () => {

@@ -1,13 +1,17 @@
-import { Controller, Get, Body, Patch, Param, Query } from '@nestjs/common';
+import { Controller, Get, Body, Patch, Param, Query, UseInterceptors } from '@nestjs/common';
 import { RewardService } from './reward.service';
 import { getRewardListDto, saveRewardDto, useRewardDto } from './dto/reward.dto';
 import { RewardHistory } from './entities/reward-history.entity';
-import { GetReward } from '../decorators/get-reward.decorator';
+import { GetReward } from '../common/decorators/get-reward.decorator';
 import { Reward } from './entities/reward.entity';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { TransactionInterceptor } from '../common/interceptors/transaction-interceptor';
+import { TransactionManager } from '../common/decorators/transaction-manager.decorator';
+import { EntityManager } from 'typeorm';
 
 @ApiTags('Reward')
 @Controller('reward')
+@UseInterceptors(TransactionInterceptor)
 export class RewardController {
   constructor(private readonly rewardService: RewardService) {}
 
@@ -33,8 +37,9 @@ export class RewardController {
   getList(
     @Param('userId') userId: string,
     @Query('cursor') cursor: getRewardListDto,
+    @TransactionManager() transactionManager: EntityManager,
   ): Promise<RewardHistory[]> {
-    return this.rewardService.getRewardHistory({ userId, cursor });
+    return this.rewardService.getRewardHistory(transactionManager, { userId, cursor });
   }
 
   @Patch('save/:userId')
@@ -46,9 +51,10 @@ export class RewardController {
   @ApiResponse({ description: 'trId 중복 시 에러 ', status: 400 })
   save(
     @Param('userId') userId: string,
-    @Body() params: saveRewardDto
-  ): Promise<Reward> {
-    return this.rewardService.saveReward({ userId, ...params });
+    @Body() params: saveRewardDto,
+    @TransactionManager() transactionManager: EntityManager,
+): Promise<Reward> {
+    return this.rewardService.saveReward(transactionManager, { userId, ...params });
   }
 
   @Patch('use/:userId')
@@ -61,8 +67,9 @@ export class RewardController {
   @ApiResponse({ description: 'trId 중복 시 에러 ', status: 400 })
   use(
     @Param('userId') userId: string,
-    @Body() params: useRewardDto
+    @Body() params: useRewardDto,
+    @TransactionManager() transactionManager: EntityManager,
   ): Promise<Reward> {
-    return this.rewardService.useReward({ userId, ...params });
+    return this.rewardService.useReward(transactionManager, { userId, ...params });
   }
 }

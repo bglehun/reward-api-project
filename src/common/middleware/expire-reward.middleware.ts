@@ -1,7 +1,7 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { RewardService } from '../reward.service';
-import { IRewardIncludeRequest } from '../interfaces/reward-request.interface';
+import { RewardService } from '../../reward/reward.service';
+import { IRewardIncludeRequest } from '../../reward/interfaces/reward-request.interface';
 
 @Injectable()
 export class ExpireRewardMiddleware implements NestMiddleware {

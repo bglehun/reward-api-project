@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { BadRequestException, HttpException, Injectable, UseInterceptors } from '@nestjs/common';
+import { DataSource, EntityManager } from 'typeorm';
 import { RewardRepository } from './repositories/reward.repository';
 import { RewardHistoryRepository } from './repositories/reward-history.repository';
 import { Reward } from './entities/reward.entity';
@@ -16,73 +16,41 @@ export class RewardService {
     private configService: ConfigService,
   ) {}
 
-  async getRewardHistory(params: { userId: string, cursor: getRewardListDto }): Promise<RewardHistory[]>  {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction('REPEATABLE READ');
 
-    try {
-      const rewardHistory = await this.rewardHistoryRepository.getRewardHistoryWithPagination(queryRunner.manager, {
-        ...params,
-        limit: Number(this.configService.get('PAGINATION_LIMIT')),
-      })
+  async getRewardHistory(
+    transactionManager: EntityManager,
+    params: { userId: string, cursor: getRewardListDto }
+  ): Promise<RewardHistory[]>  {
+    const rewardHistory = await this.rewardHistoryRepository.getRewardHistoryWithPagination(transactionManager, {
+      ...params,
+      limit: Number(this.configService.get('PAGINATION_LIMIT')),
+    })
 
-      await queryRunner.commitTransaction();
-      return rewardHistory;
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      throw new BadRequestException(err);
-    } finally {
-      await queryRunner.release();
-    }
-    return
+    return rewardHistory;
   }
 
-  async saveReward(params: { userId: string, saveReward: number, trId?: string }): Promise<Reward> {
+  async saveReward(transactionManager: EntityManager, params: { userId: string, saveReward: number, trId?: string }): Promise<Reward> {
     const { userId, saveReward, trId } = params;
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction('REPEATABLE READ');
+    const rewardInfo: Reward = await this.rewardRepository.saveReward(transactionManager, { userId, saveReward });
+    await this.rewardHistoryRepository.saveRewardHistory(transactionManager, { userId, saveReward, trId });
 
-    try {
-      const rewardInfo: Reward = await this.rewardRepository.saveReward(queryRunner.manager, { userId, saveReward });
-      await this.rewardHistoryRepository.saveRewardHistory(queryRunner.manager, { userId, saveReward, trId });
-
-      await queryRunner.commitTransaction();
-      return rewardInfo;
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      throw new BadRequestException(err);
-    } finally {
-      await queryRunner.release();
-    }
+    return rewardInfo;
   }
 
-  async useReward(params: { userId: string, useReward: number, trId?: string }): Promise<Reward> {
+  async useReward(transactionManager: EntityManager, params: { userId: string, useReward: number, trId?: string }): Promise<Reward> {
     const { userId, useReward, trId } = params;
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction('REPEATABLE READ');
+    const rewardInfo: Reward = await this.rewardRepository.useReward(transactionManager, { userId, useReward });
+    await this.rewardHistoryRepository.useRewardHistory(transactionManager, { userId, useReward, trId });
 
-    try {
-      const rewardInfo: Reward = await this.rewardRepository.useReward(queryRunner.manager, { userId, useReward });
-      await this.rewardHistoryRepository.useRewardHistory(queryRunner.manager, { userId, useReward, trId });
-
-      await queryRunner.commitTransaction();
-      return rewardInfo;
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      throw new BadRequestException(err);
-    }
-    finally {
-      await queryRunner.release();
-    }
+    return rewardInfo;
   }
 
+  /** 적립금 만료의 경우, middleware가 interceptor보다 먼저 호출되기 때문에, transaction은 따로 구현 */
   async expireRewardInMiddleWare(params: { userId: string }): Promise<Reward> {
     const { userId } = params;
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction('REPEATABLE READ');
@@ -99,7 +67,7 @@ export class RewardService {
       return rewardInfo;
     } catch (err) {
       await queryRunner.rollbackTransaction();
-      throw new BadRequestException(err);
+       throw new HttpException(err.message, err.getStatus());
     }
     finally {
       await queryRunner.release();

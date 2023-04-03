@@ -46,6 +46,18 @@ innerJoin으로 데이터를 조회.
 - 적립금 만료 (Nestjs Middleware 사용)
 Reward API 호출 시 controller 실행 전에 적립금 만료 처리 Middleware 실행.
 조회 시점으로부터 1년 전 날짜 이전의 데이터를 조회하여 만료 처리.
+
+[이외 기능]
+
+- transaction 관련 코드 중복 제거
+Nestjs Interceptor를 사용하여 transaction 관련 코드 중복 제거.
+@TransactionManager() decorator를 사용하여 transaction manager를 주입받아 사용.
+
+적립금 만료 Middleware의 경우 Interceptor 보다 먼저 실행되기 때문에, 기존 transaction 로직 유지.
+
+[추가 예정 기능]
+
+- 적립금 사용 취소 API
 ```
 
 ## 서버 실행
@@ -74,4 +86,4 @@ $ npm run test:e2e
 # 작성해보려 했지만, typeorm 관련 의존성 문제가 발생하여 작성하지 못했습니다.
 ```
 ### e2e 테스트 결과
-![e2e결과](https://user-images.githubusercontent.com/96781806/229514811-7702e449-1929-4292-804b-c19a4e6a11ae.png)
+![e2e결과](https://user-images.githubusercontent.com/96781806/229527547-79356060-29e5-44b1-8ad4-b0994c2120bc.png)

@@ -42,6 +42,7 @@ innerJoin으로 데이터를 조회.
 적립금에 관련된 필드들은 unsigned로 설정하여 음수가 될 수 없게 설정.
 
 [추가 기능]
+
 - 적립금 만료 (Nestjs Middleware 사용)
 Reward API 호출 시 controller 실행 전에 적립금 만료 처리 Middleware 실행.
 조회 시점으로부터 1년 전 날짜 이전의 데이터를 조회하여 만료 처리.
@@ -56,15 +57,21 @@ $ npm install
 # 서버 실행
 $ npm run start
 
-# watch mode
+# watch 모드
 $ npm run start:dev
 
 Swagger 문서에 접속 후 API 호출 테스트 가능.
 ```
 
-## Test
+## e2e 테스트
 
 ```bash
-# unit tests
-$ npm run test
+# app.e2e-spec.ts 파일에 테스트 코드 작성.
+# 최초 실행 시 trId 값을 유니크한 값으로 변경해야 함.
+$ npm run test:e2e
+
+# unit 테스트 코드는 작성해본 경험이 없습니다.
+# 작성해보려 했지만, typeorm 관련 의존성 문제가 발생하여 작성하지 못했습니다.
 ```
+### e2e 테스트 결과
+![e2e결과](https://user-images.githubusercontent.com/96781806/229514811-7702e449-1929-4292-804b-c19a4e6a11ae.png)

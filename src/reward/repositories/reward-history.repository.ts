@@ -1,7 +1,6 @@
 import { CustomRepository } from '../../typeorm/typeorm-custom.decorator';
 import { RewardHistory, RewardHistoryType } from '../entities/reward-history.entity';
 import { EntityManager, Repository, LessThanOrEqual, MoreThan, } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
 
 @CustomRepository(RewardHistory)
 export class RewardHistoryRepository extends Repository<RewardHistory> {
